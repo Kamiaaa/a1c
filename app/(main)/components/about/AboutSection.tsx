@@ -115,7 +115,7 @@ export default function AboutSection({
     <section className={styles.section}>
       <HeroSection 
         title="About Us"
-        description="Learn more about our mission to provide high-speed, reliable internet service and seamlessly connect homes and businesses across Dhaka."
+        description="Empowering homes and enterprises across Dhaka with highly resilient, secure, and hyper-fast personalized broadband and dedicated internet solutions."
       />
 
       <div className={styles.container}>
