@@ -35,22 +35,22 @@ const DEFAULT_SECONDARY: CarouselCta = { label: "Get Now", href: "#" };
 const DEFAULT_SLIDES: CarouselSlide[] = [
   {
     title: "YOUR INTERNET YOUR ULTIMATE WEAPON",
-    image: "/carousel/gaming.jpg",
+    image: "/img/slide-01.jpg",
     imageAlt: "Game controller",
   },
   {
     title: "Best connection for your home",
-    image: "/carousel/smart-home.jpg",
+    image: "/img/slide-02.jpg",
     imageAlt: "Smart home illustration",
   },
   {
     title: "CONNECTING YOU TO A SMARTER WORLD",
-    image: "/carousel/globe.jpg",
+    image: "/img/slide-03.jpg",
     imageAlt: "Connected world map",
   },
   {
     title: "SMART APP FOR A SMARTER CONNECTION",
-    image: "/carousel/app.jpg",
+    image: "/img/slide-04.jpg",
     imageAlt: "Mobile app screens",
   },
 ];
