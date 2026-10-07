@@ -227,7 +227,17 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 8);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -296,11 +306,7 @@ const Navbar = () => {
             : 'shadow-[0_1px_2px_rgb(15_23_42/0.05)]'
         }`}
       >
-        <div
-          className={`mx-auto max-w-7xl flex items-center justify-between gap-4 px-4 transition-[height] duration-300 sm:px-6 lg:px-8 ${
-            scrolled ? 'h-14' : 'h-16 lg:h-[4.5rem]'
-          }`}
-        >
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <Link
             href="/"
