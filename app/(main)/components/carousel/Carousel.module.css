@@ -73,6 +73,13 @@
   overflow: hidden;
 }
 
+/* Animatable diamond size for the hover fill (see .btn::before) */
+@property --r {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
 .btn {
   position: relative;
   isolation: isolate;
@@ -83,8 +90,8 @@
   transition:
     transform 450ms var(--ease-in),
     opacity 300ms var(--ease-in),
-    color 260ms ease 130ms,
-    border-color 260ms ease 130ms;
+    color 70ms linear 150ms,
+    border-color 120ms ease 60ms;
 }
 
 .slideActive .btn {
@@ -93,8 +100,8 @@
   transition:
     transform 900ms var(--ease-out) calc(1250ms + var(--bd, 0ms)),
     opacity 600ms ease calc(1250ms + var(--bd, 0ms)),
-    color 260ms ease 130ms,
-    border-color 260ms ease 130ms;
+    color 70ms linear 150ms,
+    border-color 120ms ease 60ms;
 }
 
 .btnPrimary {
@@ -109,10 +116,16 @@
   color: #fff;
 }
 
-/* Hover fill: white grows in from the four corners. The clip is "rectangle minus a
-   diamond" (even-odd); the diamond starts larger than the button (nothing painted)
-   and shrinks to the centre, passing through the hexagon shape seen in the video. */
+/* Hover fill, measured from the reference recording:
+   - the fill is "button rectangle minus a 45-degree diamond" (even-odd clip)
+   - the diamond is centred and its half-diagonal --r shrinks linearly to 0
+     (about 0.29s in), so white first appears as four small corner triangles
+   - on hover-out the diamond grows back linearly from the centre (about 0.36s)
+   The label changes colour right when the diamond shrinks past it (about half way).
+   --r starts at 7.6em, a little more than half of (width + height) for these
+   buttons, so the corners are fully covered by the diamond at rest. */
 .btn::before {
+  --r: 7.6em;
   content: "";
   position: absolute;
   inset: 0;
@@ -122,10 +135,14 @@
   clip-path: polygon(
     evenodd,
     0 0, 100% 0, 100% 100%, 0 100%, 0 0,
-    50% -55%, 155% 50%, 50% 155%, -55% 50%, 50% -55%,
+    50% calc(50% - var(--r)),
+    calc(50% + var(--r)) 50%,
+    50% calc(50% + var(--r)),
+    calc(50% - var(--r)) 50%,
+    50% calc(50% - var(--r)),
     0 0
   );
-  transition: clip-path 560ms cubic-bezier(0.65, 0, 0.35, 1);
+  transition: --r 360ms linear;
 }
 
 .btn:hover,
@@ -135,14 +152,20 @@
   outline: none;
 }
 
+/* Re-declare the entry timings so hovering never cancels them; only colour is retimed */
+.slideActive .btn:hover,
+.slideActive .btn:focus-visible {
+  transition:
+    transform 900ms var(--ease-out) calc(1250ms + var(--bd, 0ms)),
+    opacity 600ms ease calc(1250ms + var(--bd, 0ms)),
+    color 70ms linear 110ms,
+    border-color 120ms ease 0ms;
+}
+
 .btn:hover::before,
 .btn:focus-visible::before {
-  clip-path: polygon(
-    evenodd,
-    0 0, 100% 0, 100% 100%, 0 100%, 0 0,
-    50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%,
-    0 0
-  );
+  --r: 0px;
+  transition-duration: 290ms;
 }
 
 /* ---- Angled image panel ---- */
@@ -261,6 +284,58 @@
   }
   100% {
     stroke-dashoffset: 0;
+  }
+}
+
+/* Image box inside the panel: right-hand side on desktop... */
+.imgBox {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 58%;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ */
+/* Mobile (< 640px): image on top at full strength, text underneath    */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 639px) {
+  .imgBox {
+    left: 0;
+    right: 0;
+    bottom: auto;
+    width: 100%;
+    height: 54%;
+  }
+
+  /* SSR fallbacks for the mobile outline (JS replaces them with exact paths) */
+  .stripClip {
+    clip-path: var(--clip-strip, polygon(0 57%, 100% 49.5%, 100% 44%, 0 50%));
+  }
+
+  .imageClip {
+    clip-path: var(--clip-img, polygon(0 0, 100% 0, 100% 46.5%, 0 54%));
+  }
+
+  /* The reveal runs top-down over the image area only */
+  .panel {
+    clip-path: inset(0 0 70% 0);
+  }
+
+  .slab {
+    display: none;
+  }
+
+  /* Mosaic: 4 x 4 instead of 8 x 3, so tiles stay roughly square on a tall slide */
+  .mosaic {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+  }
+
+  .tile:nth-child(n + 17) {
+    display: none;
   }
 }
 

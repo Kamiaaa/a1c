@@ -35,22 +35,22 @@ const DEFAULT_SECONDARY: CarouselCta = { label: "Get Now", href: "#" };
 const DEFAULT_SLIDES: CarouselSlide[] = [
   {
     title: "YOUR INTERNET YOUR ULTIMATE WEAPON",
-    image: "/img/slide-01.jpg",
+    image: "/carousel/gaming.jpg",
     imageAlt: "Game controller",
   },
   {
     title: "Best connection for your home",
-    image: "/img/slide-02.jpg",
+    image: "/carousel/smart-home.jpg",
     imageAlt: "Smart home illustration",
   },
   {
     title: "CONNECTING YOU TO A SMARTER WORLD",
-    image: "/img/slide-03.jpg",
+    image: "/carousel/globe.jpg",
     imageAlt: "Connected world map",
   },
   {
     title: "SMART APP FOR A SMARTER CONNECTION",
-    image: "/img/slide-04.jpg",
+    image: "/carousel/app.jpg",
     imageAlt: "Mobile app screens",
   },
 ];
@@ -255,7 +255,24 @@ function intersect(p: Pt, d: Pt, q: Pt, e: Pt): Pt {
   return [p[0] + s * d[0], p[1] + s * d[1]];
 }
 
+/** Narrow screens: image across the top, slanted bottom edge with the white strip under it. */
+function mobilePanelPaths(w: number, h: number) {
+  const left = 0.54 * h; // image bottom edge, left side
+  const right = left - 0.075 * h; // ...and right side (slants up towards the right)
+  const t = 0.032 * h; // strip thickness
+  const img = roundedPath(
+    [[0, 0], [w + 4, 0], [w + 4, right], [0, left]],
+    [0, 0, 0, 0],
+  );
+  const strip = roundedPath(
+    [[0, left + t], [w + 40, right + t], [w + 40, right - 24], [0, left - 24]],
+    [0, 0, 0, 0],
+  );
+  return { img: `path('${img}')`, strip: `path('${strip}')` };
+}
+
 function panelPaths(w: number, h: number) {
+  if (w < 640) return mobilePanelPaths(w, h);
   const T0: Pt = [0.516 * w, 0]; // top of the outer (white) edge
   const V: Pt = [0.433 * w, 0.27 * h]; // outer vertex (before rounding)
   const B: Pt = [0.612 * w, h]; // where the long diagonal meets the bottom
@@ -342,7 +359,7 @@ export default function Carousel({
         if (e.key === "ArrowRight") next();
         if (e.key === "ArrowLeft") prev();
       }}
-      className={`group relative isolate w-full overflow-hidden outline-none h-[clamp(300px,30.5vw,640px)] ${styles.backdrop} ${className}`}
+      className={`group relative isolate w-full overflow-hidden outline-none h-[clamp(300px,30.5vw,640px)] max-sm:h-[clamp(500px,135vw,600px)] ${styles.backdrop} ${className}`}
     >
       <NetworkCanvas />
       <div aria-hidden className={`pointer-events-none absolute inset-0 ${styles.vignette}`} />
@@ -362,17 +379,17 @@ export default function Carousel({
             className={`absolute inset-0 ${styles.slide} ${active ? styles.slideActive : ""}`}
           >
             {/* Angled image panel: slab (back) + white strip + image (front) */}
-            <div aria-hidden={!s.imageAlt} className="pointer-events-none absolute inset-0 max-sm:opacity-30">
+            <div aria-hidden={!s.imageAlt} className="pointer-events-none absolute inset-0">
               <div className={`absolute inset-0 ${styles.panel}`}>
                 <div className={`absolute inset-0 ${styles.slab} ${styles.imageClip}`} />
                 <div className={`absolute inset-0 bg-white ${styles.strip} ${styles.stripClip}`} />
                 <div className={`absolute inset-0 ${styles.imageClip}`}>
-                  <div className="absolute inset-y-0 right-0 w-[58%] overflow-hidden">
+                  <div className={styles.imgBox}>
                     <Image
                       src={s.image}
                       alt={s.imageAlt ?? ""}
                       fill
-                      sizes="(max-width: 640px) 100vw, 58vw"
+                      sizes="(max-width: 639px) 100vw, 58vw"
                       priority={i === 0}
                       className={`object-cover object-center ${styles.img}`}
                     />
@@ -382,7 +399,7 @@ export default function Carousel({
             </div>
 
             {/* Text block */}
-            <div className="relative z-10 flex h-full w-[46%] flex-col justify-center pb-[clamp(28px,3.5vw,64px)] pl-[clamp(24px,3vw,72px)] max-sm:w-full max-sm:pr-6">
+            <div className="relative z-10 flex h-full w-[46%] flex-col justify-center pb-[clamp(28px,3.5vw,64px)] pl-[clamp(24px,3vw,72px)] max-sm:absolute max-sm:bottom-14 max-sm:left-0 max-sm:h-auto max-sm:w-full max-sm:justify-end max-sm:px-5 max-sm:pb-0">
               <p
                 className={`${styles.eyebrow} text-[clamp(9px,0.8vw,14px)] font-bold uppercase tracking-[0.22em] text-white`}
               >
