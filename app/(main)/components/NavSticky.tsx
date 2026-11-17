@@ -68,7 +68,7 @@ const NavSticky = () => {
 
       {/* About Us Link */}
       <Link
-        href="/management-team"
+        href="/about-us"
         className={`group flex items-center justify-center p-3 rounded-lg transition-all duration-200 hover:scale-110 ${
           pathname === '/management-team' || pathname === '/mission-vision' || pathname === '/bod'
             ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
@@ -93,17 +93,6 @@ const NavSticky = () => {
       </Link>
 
       {/* Packages Link */}
-      <Link
-        href="/career"
-        className={`group flex items-center justify-center p-3 rounded-lg transition-all duration-200 hover:scale-110 ${
-          pathname === '/career'
-            ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-            : 'text-gray-400 hover:text-orange-400 hover:bg-white/10'
-        }`}
-        title="Packages"
-      >
-        <PackageOpen className="w-5 h-5" />
-      </Link>
 
       {/* Contact Link */}
       <Link
