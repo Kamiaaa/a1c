@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "A1 Communication",
+  title: "A1 Communication (A1C)",
   description: "Best ISP in Bangladesh",
 };
 
