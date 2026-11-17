@@ -10,6 +10,8 @@ export type CarouselCta = {
 };
 
 export type CarouselSlide = {
+  /** Stable id (used as the React key). Falls back to the title. */
+  id?: string;
   /** Large heading. Rendered exactly as written (the small eyebrow above it is auto-uppercased). */
   title: string;
   /** Small line above the heading. Defaults to the title. */
@@ -346,6 +348,8 @@ export default function Carousel({
   const next = useCallback(() => setIndex((i) => (i + 1) % count), [count]);
   const prev = useCallback(() => setIndex((i) => (i - 1 + count) % count), [count]);
 
+  if (count === 0) return null;
+
   return (
     <section
       ref={sectionRef}
@@ -371,7 +375,7 @@ export default function Carousel({
 
         return (
           <div
-            key={s.title}
+            key={s.id ?? s.title}
             role="group"
             aria-roledescription="slide"
             aria-label={`${i + 1} of ${count}`}
@@ -484,7 +488,7 @@ export default function Carousel({
               const isActive = i === index;
               return (
                 <button
-                  key={s.title}
+                  key={s.id ?? s.title}
                   type="button"
                   onClick={() => go(i)}
                   aria-label={`Go to slide ${i + 1}`}
