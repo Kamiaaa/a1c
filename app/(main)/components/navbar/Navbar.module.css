@@ -1,0 +1,119 @@
+/* ---------- Navbar.module.css ---------- */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animateFadeIn {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+
+/* ---------- Self Care Portal button ----------
+   Same effect as the Donate Now / View More buttons.
+   Rest: solid orange-600 pill, white text.
+   Hover/focus: a white diamond grows from the center to fill the button,
+   the text turns dark orange, and the button scales up with a shadow.
+   Leaving shrinks the diamond back. */
+@property --portal-diamond {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+.portalButton {
+  --portal-orange: var(--color-orange-600, #ea580c); /* Tailwind orange-600 */
+  --portal-ink: var(--color-orange-700, #c2410c); /* darker orange for text on white (about 5:1 contrast) */
+  --portal-diamond-max: 7.25rem;
+
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  overflow: hidden;
+  padding: 0.625rem 1.5rem;
+  border: 2px solid var(--portal-orange);
+  border-radius: 9999px;
+  background: var(--portal-orange);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color 0.26s linear,
+    scale 0.3s,
+    box-shadow 0.3s;
+}
+
+/* Full-width variant (mobile sheet): the diamond must reach the far corners. */
+.portalButtonFull {
+  --portal-diamond-max: 14rem;
+  display: flex;
+  width: 100%;
+  max-width: 24rem;
+  margin-inline: auto;
+  padding-block: 0.875rem;
+  font-size: 1rem;
+}
+
+.portalButton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #fff;
+  --portal-diamond: 0px;
+  clip-path: polygon(
+    calc(50% - var(--portal-diamond)) 50%,
+    50% calc(50% - var(--portal-diamond)),
+    calc(50% + var(--portal-diamond)) 50%,
+    50% calc(50% + var(--portal-diamond))
+  );
+  transition: --portal-diamond 0.26s linear;
+}
+
+.portalButton:hover,
+.portalButton:focus-visible {
+  color: var(--portal-ink);
+  scale: 1.05;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.portalButton:hover::before,
+.portalButton:focus-visible::before {
+  --portal-diamond: var(--portal-diamond-max);
+}
+
+.portalButton:focus-visible {
+  outline: 2px solid var(--portal-orange);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animateFadeIn {
+    animation: none;
+  }
+
+  .portalButton,
+  .portalButton::before {
+    transition-duration: 0.01ms;
+  }
+
+  .portalButton:hover,
+  .portalButton:focus-visible {
+    scale: 1;
+  }
+}
