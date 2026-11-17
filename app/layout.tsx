@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "A1 Communication",
-  description: "Best ISP",
+  description: "Best ISP in Bangladesh",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
