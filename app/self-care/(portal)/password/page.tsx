@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { http, errMsg } from '@/lib/http';
 import { useCustomer } from '../../_components/CustomerProvider';
@@ -9,7 +8,6 @@ import { Alert, Card, PageHeader, btnAccent, cx, inputCls, labelCls } from '../.
 
 export default function PasswordPage() {
   const { me, reload } = useCustomer();
-  const router = useRouter();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -36,12 +34,12 @@ export default function PasswordPage() {
     try {
       await http('/api/self-care/change-password', { method: 'POST', json: { currentPassword: current, newPassword: next } });
       setCurrent(''); setNext(''); setConfirm('');
-      await reload();
       if (forced) {
-        router.replace('/self-care');
-      } else {
-        setMsg({ tone: 'success', text: 'Password updated. Other devices have been signed out.' });
+        window.location.assign('/self-care'); // full load: the router may have cached the old "go to /password" redirect
+        return;
       }
+      await reload();
+      setMsg({ tone: 'success', text: 'Password updated. Other devices have been signed out.' });
     } catch (err) {
       setMsg({ tone: 'error', text: errMsg(err) });
     } finally {

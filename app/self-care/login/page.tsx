@@ -3,13 +3,11 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Wifi, Receipt, LifeBuoy } from 'lucide-react';
 import { http, errMsg } from '@/lib/http';
 import { Alert, btnAccent, inputCls, labelCls } from '../_components/ui';
 
 export default function SelfCareLoginPage() {
-  const router = useRouter();
   const [customerId, setCustomerId] = useState('');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
@@ -19,9 +17,9 @@ export default function SelfCareLoginPage() {
   // Already signed in? Skip the form.
   useEffect(() => {
     http<{ customer: { mustChangePassword: boolean } }>('/api/self-care/me', { silent: true })
-      .then((r) => router.replace(r.customer.mustChangePassword ? '/self-care/password' : '/self-care'))
+      .then((r) => window.location.replace(r.customer.mustChangePassword ? '/self-care/password' : '/self-care'))
       .catch(() => {});
-  }, [router]);
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,8 +30,9 @@ export default function SelfCareLoginPage() {
         method: 'POST',
         json: { customerId, password },
       });
-      router.replace(res.mustChangePassword ? '/self-care/password' : '/self-care');
-      router.refresh();
+      // Full page load on purpose: the client router may have cached a "redirect to login" for /self-care
+      // (prefetched while signed out), which would bounce a freshly signed-in user back to this form.
+      window.location.assign(res.mustChangePassword ? '/self-care/password' : '/self-care');
     } catch (err) {
       setError(errMsg(err));
       setLoading(false);

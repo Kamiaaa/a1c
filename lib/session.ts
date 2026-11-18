@@ -39,6 +39,10 @@ export async function getStaff(allowed: StaffRole[] = ['admin', 'moderator']): P
 
 const CUSTOMER_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 3; // 3 days
 
+// "Secure" cookies are dropped by browsers on plain http://. If you must serve the portal over http
+// (e.g. a bare IP address), set COOKIE_SECURE=false - otherwise login looks successful but never sticks.
+const cookieSecure = process.env.COOKIE_SECURE ? process.env.COOKIE_SECURE === 'true' : process.env.NODE_ENV === 'production';
+
 export async function signCustomerToken(c: ICustomer): Promise<string> {
   return new SignJWT({ cid: c.customerId, tv: c.tokenVersion, mcp: c.mustChangePassword })
     .setProtectedHeader({ alg: 'HS256' })
@@ -53,8 +57,8 @@ export function setCustomerCookie(res: NextResponse, token: string) {
     name: CUSTOMER_COOKIE,
     value: token,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: cookieSecure,
+    sameSite: 'lax', // 'strict' would drop the cookie on links opened from WhatsApp/SMS/email
     maxAge: CUSTOMER_TOKEN_TTL_SECONDS,
     path: '/',
   });
@@ -65,8 +69,8 @@ export function clearCustomerCookie(res: NextResponse) {
     name: CUSTOMER_COOKIE,
     value: '',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: cookieSecure,
+    sameSite: 'lax', // 'strict' would drop the cookie on links opened from WhatsApp/SMS/email
     maxAge: 0,
     path: '/',
   });

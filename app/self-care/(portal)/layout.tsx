@@ -3,10 +3,10 @@
 import { useState, type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { CircleUser, KeyRound, LayoutDashboard, LifeBuoy, LogOut, Menu, Receipt, Wifi, X } from 'lucide-react';
 import { CustomerProvider, useCustomer } from '../_components/CustomerProvider';
-import { Spinner, Badge, cx } from '../_components/ui';
+import { Alert, Badge, Spinner, btnPrimary, cx } from '../_components/ui';
 
 const NAV = [
   { href: '/self-care', label: 'Overview', icon: LayoutDashboard },
@@ -18,9 +18,8 @@ const NAV = [
 ];
 
 function Shell({ children }: { children: ReactNode }) {
-  const { me, loading } = useCustomer();
+  const { me, loading, error, reload } = useCustomer();
   const pathname = usePathname();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -31,8 +30,7 @@ function Shell({ children }: { children: ReactNode }) {
     try {
       await fetch('/api/self-care/logout', { method: 'POST' });
     } finally {
-      router.replace('/self-care/login');
-      router.refresh();
+      window.location.assign('/self-care/login'); // full reload clears every cached page
     }
   };
 
@@ -127,7 +125,16 @@ function Shell({ children }: { children: ReactNode }) {
         )}
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">{loading && !me ? <Spinner label="Loading your account..." /> : children}</main>
+      <main className="mx-auto max-w-6xl px-4 py-8">{loading && !me ? (
+          <Spinner label="Loading your account..." />
+        ) : !me ? (
+          <div className="mx-auto max-w-md space-y-4 py-16 text-center">
+            <Alert tone={error ? 'error' : 'info'}>We could not load your account. Please check your connection and try again.</Alert>
+            <button onClick={() => reload()} className={btnPrimary}>Try again</button>
+          </div>
+        ) : (
+          children
+        )}</main>
 
       <footer className="mx-auto max-w-6xl px-4 pb-10 text-center text-xs text-stone-500">
         Need help? Visit our <Link href="/contact" className="font-medium text-brand underline">contact page</Link> or open a ticket from the Support tab.
