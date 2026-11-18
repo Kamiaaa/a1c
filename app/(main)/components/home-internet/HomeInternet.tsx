@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Outfit } from "next/font/google";
 import styles from "./HomeInternet.module.css";
 import FaqSection from "../faq-section/FaqSection";
+import PlanImage from "../PlanImage";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -216,10 +217,11 @@ export default function HomeInternet({
                   className={`${styles.shape} relative flex min-h-[290px] flex-col px-7 pb-6 pt-9`}
                 >
                   <div className={styles.wipe} aria-hidden="true">
-                    <Image
-                      src={plan.image || personImage}
+                    <PlanImage
+                      src={plan.image}
+                      fallback={personImage}
                       alt=""
-                      fill
+                      width={800}
                       sizes="(min-width: 768px) 33vw, 100vw"
                       className={`${styles.photo} object-cover object-[78%_100%]`}
                     />
@@ -322,7 +324,7 @@ export default function HomeInternet({
                   <div className="flex items-center justify-between rounded-2xl bg-[#7bb436]/10 border border-[#7bb436]/20 p-4">
                     <div className="flex items-center gap-3">
                       <div className="relative h-12 w-16 overflow-hidden rounded-xl">
-                        <Image src={selectedPlan.image || personImage} alt={selectedPlan.name} fill className="object-cover" />
+                        <PlanImage src={selectedPlan.image} fallback={personImage} alt={selectedPlan.name} width={200} sizes="64px" />
                       </div>
                       <div>
                         <h4 className="text-sm font-bold text-[#1c3a1f]">{selectedPlan.name}</h4>

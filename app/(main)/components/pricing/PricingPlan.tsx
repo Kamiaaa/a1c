@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, type CSSProperties } from "react";
-import Image from "next/image";
+import PlanImage from "../PlanImage";
 import { Outfit } from "next/font/google";
 import styles from "./PricingPlan.module.css";
 
@@ -55,6 +55,7 @@ export default function PricingPlans() {
           setPlans(sortedPlans);
         }
       })
+      .catch((err) => console.error("Failed to fetch plans", err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -84,8 +85,8 @@ export default function PricingPlans() {
         setSuccessMsg("");
         setFormData({ customerName: "", email: "", phone: "", address: "" });
       }, 2500);
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to submit order");
     } finally {
       setSubmitting(false);
     }
@@ -115,7 +116,7 @@ export default function PricingPlans() {
             <div className="flex flex-col items-center gap-6 px-8 py-8 md:flex-row md:justify-between md:px-12">
               <div className="flex flex-col gap-3">
                 <div className="relative h-20 w-48 overflow-hidden rounded-2xl">
-                  <Image src={plan.image} alt={plan.name} fill sizes="192px" className="object-cover" />
+                  <PlanImage src={plan.image} alt={plan.name} width={400} sizes="192px" />
                 </div>
                 <h3 className={`${styles.title} text-lg font-semibold text-[#1c3a1f]`} style={step(4)}>
                   {plan.name}
@@ -197,7 +198,7 @@ export default function PricingPlans() {
                   <div className="flex items-center justify-between rounded-2xl bg-orange-50/60 border border-orange-100 p-4">
                     <div className="flex items-center gap-3">
                       <div className="relative h-12 w-16 overflow-hidden rounded-xl">
-                        <Image src={selectedPlan.image} alt={selectedPlan.name} fill className="object-cover" />
+                        <PlanImage src={selectedPlan.image} alt={selectedPlan.name} width={200} sizes="64px" />
                       </div>
                       <div>
                         <h4 className="text-sm font-bold text-[#1c3a1f]">{selectedPlan.name}</h4>

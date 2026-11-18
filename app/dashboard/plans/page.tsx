@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ImageUploader } from '../_components/ImageUploader';
 
 type Plan = {
   _id?: string;
@@ -22,7 +23,8 @@ export default function PlansManagePage() {
   const [id, setId] = useState('');
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
-  const [image, setImage] = useState('/img/slide-01.jpg');
+  const [imageFile, setImageFile] = useState<File | null>(null); // new file picked in the form
+  const [currentImage, setCurrentImage] = useState(''); // image already saved on the plan being edited
   const [features, setFeatures] = useState('Bandwidth Shared (1:8 Ratio), Optical Fiber Connection, Connection Charge Free, 24/7 Customer Support');
 
   const fetchPlans = async () => {
@@ -32,7 +34,7 @@ export default function PlansManagePage() {
       if (data.success) {
         setPlans(data.data);
       }
-    } catch (err) {
+    } catch {
       console.error('Failed to fetch plans');
     } finally {
       setFetching(false);
@@ -46,23 +48,26 @@ export default function PlansManagePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus(null);
+
+    if (!isEditing && !imageFile) {
+      setStatus({ type: 'error', message: 'Please choose an image for the plan.' });
+      return;
+    }
     setLoading(true);
 
     try {
       const endpoint = isEditing ? `/api/plans/${id}` : '/api/plans';
       const method = isEditing ? 'PUT' : 'POST';
 
-      const res = await fetch(endpoint, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id,
-          name,
-          price: Number(price),
-          image,
-          features: features.split(',').map((f) => f.trim()),
-        }),
-      });
+      // multipart: the server uploads the image to Cloudinary and stores the returned URL
+      const body = new FormData();
+      body.append('id', id);
+      body.append('name', name);
+      body.append('price', price);
+      body.append('features', features);
+      if (imageFile) body.append('image', imageFile);
+
+      const res = await fetch(endpoint, { method, body });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save plan');
@@ -74,8 +79,8 @@ export default function PlansManagePage() {
       
       resetForm();
       fetchPlans();
-    } catch (err: any) {
-      setStatus({ type: 'error', message: err.message });
+    } catch (err) {
+      setStatus({ type: 'error', message: err instanceof Error ? err.message : 'Failed to save plan' });
     } finally {
       setLoading(false);
     }
@@ -86,7 +91,8 @@ export default function PlansManagePage() {
     setId(plan.id);
     setName(plan.name);
     setPrice(plan.price.toString());
-    setImage(plan.image);
+    setImageFile(null);
+    setCurrentImage(plan.image);
     setFeatures(plan.features.join(', '));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -101,8 +107,8 @@ export default function PlansManagePage() {
 
       setStatus({ type: 'success', message: 'Plan deleted successfully!' });
       fetchPlans();
-    } catch (err: any) {
-      setStatus({ type: 'error', message: err.message });
+    } catch (err) {
+      setStatus({ type: 'error', message: err instanceof Error ? err.message : 'Failed to delete plan' });
     }
   };
 
@@ -111,7 +117,8 @@ export default function PlansManagePage() {
     setId('');
     setName('');
     setPrice('');
-    setImage('/img/slide-01.jpg');
+    setImageFile(null);
+    setCurrentImage('');
     setFeatures('Bandwidth Shared (1:8 Ratio), Optical Fiber Connection, Connection Charge Free, 24/7 Customer Support');
   };
 
@@ -191,27 +198,22 @@ export default function PlansManagePage() {
               <input
                 type="number"
                 required
+                min={0}
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-600 focus:border-slate-600 focus:outline-none transition text-sm"
                 placeholder="500"
               />
             </div>
-
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1.5">
-                Image Asset Path
-              </label>
-              <input
-                type="text"
-                required
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-600 focus:border-slate-600 focus:outline-none transition text-sm"
-                placeholder="/img/slide-02.jpg"
-              />
-            </div>
           </div>
+
+          <ImageUploader
+            file={imageFile}
+            onFile={setImageFile}
+            currentUrl={isEditing ? currentImage : ''}
+            onError={(message) => setStatus({ type: 'error', message })}
+            hint="JPG, PNG, WebP or AVIF, up to 4 MB. Stored on Cloudinary."
+          />
 
           <div>
             <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1.5">
@@ -259,7 +261,9 @@ export default function PlansManagePage() {
           <div className="space-y-3">
             {plans.map((p) => (
               <div key={p._id || p.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-800 bg-slate-950/60 text-sm gap-4">
-                <div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.image} alt="" className="h-12 w-20 shrink-0 rounded-lg border border-slate-800 object-cover" />
+                <div className="min-w-0 flex-1">
                   <p className="font-semibold text-slate-200">{p.name}</p>
                   <p className="text-xs text-slate-400">ID: {p.id} • <span className="text-[#ff6600] font-bold">৳{p.price}/mo</span></p>
                 </div>
