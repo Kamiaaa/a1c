@@ -160,16 +160,16 @@ const Contact = () => {
 
             <div className={styles.mapWrapper}>
               <iframe
-              title="Google Map Location"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3648.4023249018446!2d90.3800!3d23.8748!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3757c42738b5d3a5%3A0xb249f3e498c4d28d!2sUttara%2C%20Dhaka%2C%20Bangladesh!5e0!3m2!1sen!2sbd!4v1700000000000!5m2!1sen!2sbd"
-              width="100%"
-              height="100%"
-              style={{ border: 0, filter: 'invert(90%) hue-rotate(180deg) contrast(90%)' }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="w-full h-full"
-            />
+                title="Google Map Location"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3648.4023249018446!2d90.3800!3d23.8748!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3757c42738b5d3a5%3A0xb249f3e498c4d28d!2sUttara%2C%20Dhaka%2C%20Bangladesh!5e0!3m2!1sen!2sbd!4v1700000000000!5m2!1sen!2sbd"
+                width="100%"
+                height="100%"
+                style={{ border: 0, filter: 'invert(90%) hue-rotate(180deg) contrast(90%)' }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="w-full h-full"
+              />
             </div>
 
             <div className={styles.mapDirections}>
@@ -178,10 +178,10 @@ const Contact = () => {
                 <div>
                   <h4 className={styles.infoTitle}>Directions</h4>
                   <p className={styles.infoDesc}>
-                    Police Plaza Concord (7th Floor), Tower-2 Plot-2, Road-144, Gulshan-1, Dhaka-1212, Bangladesh
+                    Uttara, Dhaka-1230, Bangladesh
                   </p>
                   <a 
-                    href="https://maps.google.com/?q=Police+Plaza+Concord+Gulshan+Dhaka"
+                    href="https://maps.google.com/?q=Uttara+Dhaka+1230+Bangladesh"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={styles.dirLink}
