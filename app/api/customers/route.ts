@@ -4,12 +4,14 @@ import connectDB from '@/lib/db';
 import { getStaff, publicCustomer } from '@/lib/session';
 import { fail, readJson, serverError, str } from '@/lib/api';
 import { generateTempPassword, randomCustomerId } from '@/lib/ids';
+import { pageMeta, parsePaging } from '@/lib/pagination';
 import { Customer, CUSTOMER_STATUSES, type CustomerStatus } from '@/models/Customer';
 import Plan from '@/models/Plan';
 
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-// GET /api/customers?q=&status=   (admin + moderator)
+// GET /api/customers?q=&status=&page=1&limit=10   (admin + moderator)
+// Returns { data, pagination, counts } - counts cover ALL customers (not just the current page/filter).
 export async function GET(req: Request) {
   try {
     const staff = await getStaff();
@@ -26,12 +28,19 @@ export async function GET(req: Request) {
       filter.$or = [{ customerId: rx }, { name: rx }, { phone: rx }, { email: rx }];
     }
 
+    const { page: requestedPage, limit } = parsePaging(req.url, { defaultLimit: 10, maxLimit: 500 });
+
     await connectDB();
-    const [customers, plans] = await Promise.all([
-      Customer.find(filter).sort({ createdAt: -1 }).limit(500),
+    const total = await Customer.countDocuments(filter);
+    const meta = pageMeta(total, requestedPage, limit);
+
+    const [customers, plans, grouped] = await Promise.all([
+      Customer.find(filter).sort({ createdAt: -1, _id: -1 }).skip(meta.skip).limit(limit),
       Plan.find({}).select('id name price'),
+      Customer.aggregate<{ _id: string; n: number }>([{ $group: { _id: '$status', n: { $sum: 1 } } }]),
     ]);
     const planMap = new Map(plans.map((p) => [p.id, p]));
+    const n = (s: string) => grouped.find((g) => g._id === s)?.n ?? 0;
 
     return NextResponse.json({
       data: customers.map((c) => ({
@@ -40,6 +49,8 @@ export async function GET(req: Request) {
         planPrice: c.planId ? planMap.get(c.planId)?.price ?? null : null,
         createdBy: c.createdBy?.name ?? null,
       })),
+      pagination: { page: meta.page, limit: meta.limit, total: meta.total, totalPages: meta.totalPages },
+      counts: { total: n('Active') + n('Suspended') + n('Disconnected'), active: n('Active'), suspended: n('Suspended'), disconnected: n('Disconnected') },
     });
   } catch (e) {
     return serverError(e);
