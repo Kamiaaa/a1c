@@ -3,10 +3,12 @@ import connectDB from '@/lib/db';
 import { getStaff } from '@/lib/session';
 import { fail, isObjectId, readJson, serverError, str } from '@/lib/api';
 import { randomInvoiceNo } from '@/lib/ids';
+import { pageMeta, parsePaging } from '@/lib/pagination';
 import { Invoice } from '@/models/Invoice';
 import { Customer } from '@/models/Customer';
 import Plan from '@/models/Plan';
 
+// GET /api/invoices?status=Paid|Unpaid&customer=<id>&page=1&limit=10  ->  { data, pagination }
 export async function GET(req: Request) {
   try {
     if (!(await getStaff())) return fail('Unauthorized', 403);
@@ -17,9 +19,17 @@ export async function GET(req: Request) {
     const customer = sp.get('customer');
     if (customer && isObjectId(customer)) filter.customer = customer;
 
+    const { page: requestedPage, limit } = parsePaging(req.url, { defaultLimit: 10, maxLimit: 100 });
+
     await connectDB();
-    const data = await Invoice.find(filter).sort({ createdAt: -1 }).limit(300);
-    return NextResponse.json({ data });
+    const total = await Invoice.countDocuments(filter);
+    const meta = pageMeta(total, requestedPage, limit);
+    const data = await Invoice.find(filter).sort({ createdAt: -1, _id: -1 }).skip(meta.skip).limit(limit);
+
+    return NextResponse.json({
+      data,
+      pagination: { page: meta.page, limit: meta.limit, total: meta.total, totalPages: meta.totalPages },
+    });
   } catch (e) {
     return serverError(e);
   }

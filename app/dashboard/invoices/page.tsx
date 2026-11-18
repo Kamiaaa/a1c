@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { http, errMsg } from '@/lib/http';
 import type { CustomerRow, InvoiceDTO } from '@/lib/types';
+import { Pagination } from '../_components/Pagination';
 import { DBadge, DModal, StatusMsg, dBtnGhost, dBtnPrimary, dCard, dInput, dLabel, date, money, useStaffRole } from '../_components/dark';
 
 const plusDays = (n: number) => {
@@ -18,6 +19,10 @@ export default function InvoicesPage() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
+  const [fetching, setFetching] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [meta, setMeta] = useState({ total: 0, totalPages: 1 });
   const [msg, setMsg] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
 
   const [creating, setCreating] = useState(false);
@@ -28,22 +33,29 @@ export default function InvoicesPage() {
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
+    setFetching(true);
     try {
-      const r = await http<{ data: InvoiceDTO[] }>(`/api/invoices${status ? `?status=${status}` : ''}`);
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (status) params.set('status', status);
+      const r = await http<{ data: InvoiceDTO[]; pagination: { page: number; total: number; totalPages: number } }>(`/api/invoices?${params}`);
       setRows(r.data);
+      setMeta({ total: r.pagination.total, totalPages: r.pagination.totalPages });
+      // server clamps the page (e.g. marking the last "Unpaid" row as paid while filtering Unpaid)
+      if (r.pagination.page !== page) setPage(r.pagination.page);
     } catch (e) {
       setMsg({ type: 'error', text: errMsg(e) });
     } finally {
       setLoading(false);
+      setFetching(false);
     }
-  }, [status]);
+  }, [status, page, limit]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   useEffect(() => {
-    http<{ data: CustomerRow[] }>('/api/customers').then((r) => setCustomers(r.data)).catch(() => {});
+    http<{ data: CustomerRow[] }>('/api/customers?limit=500').then((r) => setCustomers(r.data)).catch(() => {});
   }, []);
 
   const pickCustomer = (id: string) => {
@@ -105,11 +117,11 @@ export default function InvoicesPage() {
 
       <div className={`${dCard} overflow-hidden`}>
         <div className="border-b border-slate-800 p-4">
-          <select value={status} onChange={(e) => { setStatus(e.target.value); setLoading(true); }} className={`${dInput} sm:w-48`}>
+          <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className={`${dInput} sm:w-48`}>
             <option value="">All invoices</option><option>Unpaid</option><option>Paid</option>
           </select>
         </div>
-        <div className="overflow-x-auto">
+        <div className={`overflow-x-auto transition-opacity ${fetching && !loading ? 'opacity-60' : ''}`}>
           <table className="w-full min-w-[820px] text-left text-sm">
             <thead className="border-b border-slate-800 bg-slate-950/40 text-xs uppercase tracking-wider text-slate-400">
               <tr><th className="px-6 py-4">Invoice</th><th className="px-6 py-4">Customer</th><th className="px-6 py-4">Period</th><th className="px-6 py-4">Amount</th><th className="px-6 py-4">Due</th><th className="px-6 py-4">Status</th><th className="px-6 py-4 text-right">Actions</th></tr>
@@ -145,6 +157,16 @@ export default function InvoicesPage() {
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          page={page}
+          limit={limit}
+          total={meta.total}
+          totalPages={meta.totalPages}
+          disabled={fetching}
+          onPage={setPage}
+          onLimit={(n) => { setLimit(n); setPage(1); }}
+        />
       </div>
 
       {creating && (
