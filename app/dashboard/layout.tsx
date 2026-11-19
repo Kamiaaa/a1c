@@ -1,4 +1,5 @@
 // app/dashboard/layout.tsx
+// app/dashboard/layout.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,6 +17,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [counts, setCounts] = useState({ pendingRequests: 0, openTickets: 0 });
+  // Manual open/closed choice per menu group. No entry = collapsed, unless the group holds the current page.
+  const [manual, setManual] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     async function fetchUser() {
@@ -118,41 +121,94 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .substring(0, 2);
   };
 
-  const renderNav = (onNavigate?: () => void) => (
-    <nav className="p-4 space-y-5" aria-label="Dashboard">
-      {sections.map((section, si) => (
-        <div key={section.label ?? si} className="space-y-1.5">
-          {section.label && (
-            <p className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{section.label}</p>
+  const renderNav = (onNavigate?: () => void) => {
+    const renderItem = (item: NavItem, groupLabel?: string) => {
+      const active = isItemActive(item.href);
+      return (
+        <Link
+          key={item.href}
+          href={item.href}
+          onClick={() => {
+            if (groupLabel) setManual((m) => ({ ...m, [groupLabel]: true })); // keep the group open after navigating
+            onNavigate?.();
+          }}
+          aria-current={active ? 'page' : undefined}
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
+            active
+              ? 'bg-slate-800/80 text-slate-100 shadow-sm border border-slate-700/50'
+              : 'text-slate-400 hover:bg-slate-900/80 hover:text-slate-200 hover:translate-x-1'
+          }`}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full transition-all duration-200 ${active ? 'bg-indigo-400' : 'bg-transparent group-hover:bg-slate-600'}`}></span>
+          <span className="flex-1">{item.name}</span>
+          {!!item.badge && item.badge > 0 && (
+            <span className="min-w-5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-center text-[11px] font-semibold text-amber-400">
+              {item.badge > 99 ? '99+' : item.badge}
+            </span>
           )}
-          {section.items.map((item) => {
-            const active = isItemActive(item.href);
+        </Link>
+      );
+    };
+
+    return (
+      <nav className="p-4 space-y-1" aria-label="Dashboard">
+        {sections.map((section, si) => {
+          // "Overview" has no heading, so it is always visible
+          if (!section.label) {
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onNavigate}
-                aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
-                  active
-                    ? 'bg-slate-800/80 text-slate-100 shadow-sm border border-slate-700/50'
-                    : 'text-slate-400 hover:bg-slate-900/80 hover:text-slate-200 hover:translate-x-1'
-                }`}
-              >
-                <span className={`h-1.5 w-1.5 rounded-full transition-all duration-200 ${active ? 'bg-indigo-400' : 'bg-transparent group-hover:bg-slate-600'}`}></span>
-                <span className="flex-1">{item.name}</span>
-                {!!item.badge && item.badge > 0 && (
-                  <span className="min-w-5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-center text-[11px] font-semibold text-amber-400">
-                    {item.badge > 99 ? '99+' : item.badge}
-                  </span>
-                )}
-              </Link>
+              <div key={si} className="space-y-1.5 pb-1">
+                {section.items.map((item) => renderItem(item))}
+              </div>
             );
-          })}
-        </div>
-      ))}
-    </nav>
-  );
+          }
+
+          const label = section.label;
+          const containsActive = section.items.some((i) => isItemActive(i.href));
+          const open = manual[label] ?? containsActive;
+          const waiting = section.items.reduce((n, i) => n + (i.badge ?? 0), 0);
+          const panelId = `nav-group-${label.toLowerCase().replace(/\s+/g, '-')}`;
+
+          return (
+            <div key={label}>
+              <button
+                type="button"
+                onClick={() => setManual((m) => ({ ...m, [label]: !open }))}
+                aria-expanded={open}
+                aria-controls={panelId}
+                className="flex w-full cursor-pointer items-center justify-between rounded-lg px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 transition hover:bg-slate-900/60 hover:text-slate-300"
+              >
+                <span className="flex items-center gap-2">
+                  {label}
+                  {/* keep pending counts visible while the group is collapsed */}
+                  {!open && waiting > 0 && (
+                    <span className="min-w-5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-center text-[11px] font-semibold normal-case text-amber-400">
+                      {waiting > 99 ? '99+' : waiting}
+                    </span>
+                  )}
+                </span>
+                <svg
+                  className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m9 5 7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* grid-rows 0fr -> 1fr animates the height; inert keeps hidden links out of the tab order */}
+              <div id={panelId} className={`grid transition-[grid-template-rows] duration-200 ease-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                <div className="-mx-1 overflow-hidden px-1" inert={!open}>
+                  <div className="space-y-1.5 pb-2 pt-1">{section.items.map((item) => renderItem(item, label))}</div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </nav>
+    );
+  };
 
   const totalAttention = counts.pendingRequests + counts.openTickets;
 
